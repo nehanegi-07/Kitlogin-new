@@ -1,0 +1,89 @@
+{{- if .Values.web.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "kitlogin.fullname" . }}-web
+  labels: {{- include "_snippet-metadata-labels-common" . | nindent 4 }}
+  annotations: {{- include "_snippet-metadata-annotations-common" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+        app: {{ template "kitlogin.fullname" . }}
+        release: "{{ .Release.Name }}"
+        role: web
+  {{- if not .Values.web.hpa.enabled }}
+  replicas: {{ .Values.web.replicacount }}
+  {{- end }}
+  template:
+    metadata:
+      annotations:
+        checksum/secrets.yaml: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+      {{- if .Values.web.podAnnotations }}
+{{ toYaml .Values.web.podAnnotations | indent 8 }}
+      {{- end }}
+      labels:
+        app: {{ template "kitlogin.fullname" . }}
+        release: "{{ .Release.Name }}"
+        role: web
+        {{- if (eq (default .Values.image.tag "none") "latest") }}
+        date: "{{ now | unixEpoch }}"
+        {{- end }}
+        {{- if .Values.web.podLabels }}
+{{ toYaml .Values.web.podLabels | indent 8 }}
+        {{- end }}
+    spec:
+      terminationGracePeriodSeconds: {{ include "snippet.web-deployments.terminationGracePeriodSeconds" . }}
+      serviceAccountName: {{ template "kitlogin.serviceAccountName" . }}
+      {{- if .Values.web.affinity }}
+      affinity:
+{{ toYaml .Values.web.affinity | indent 8 }}
+      {{- end }}
+      {{- if .Values.web.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.web.nodeSelector | indent 8 }}
+      {{- end }}
+      {{- if .Values.web.tolerations }}
+      tolerations:
+{{ toYaml .Values.web.tolerations | indent 8 }}
+      {{- end }}
+      {{- if .Values.web.schedulerName }}
+      schedulerName: "{{ .Values.web.schedulerName }}"
+      {{- end }}
+      {{- if .Values.image.imagePullSecrets }}
+      imagePullSecrets:
+{{ toYaml .Values.image.imagePullSecrets | indent 8 }}
+      {{- end }}
+    
+      containers:
+      - name: {{ .Chart.Name }}-web
+        image: {{ template "kitlogin.image.fullPath" . }}
+        command:
+          - ./bin/docker
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.service.internalPort }}
+        # Expose the port on which Prometheus /metrics endpoint resides
+        - containerPort: 8001
+        env:
+        - name: DISABLE_SECURE_SSL_REDIRECT
+          value: '1'
+        - name: IS_BEHIND_PROXY
+          value: '1'
+      {{- if eq .Values.web.secureCookies false }}
+        - name: SECURE_COOKIES
+          value: '0'
+      {{- end }}
+       
+        {{- if eq .Values.saml.disabled true }}
+        - name: SAML_DISABLED
+          value: '1'
+        {{- end }}
+
+{{- if .Values.env }}
+{{ toYaml .Values.env | indent 8 }}
+{{- end }}
+{{- if .Values.web.env }}
+{{ toYaml .Values.web.env | indent 8 }}
+{{- end }}
+
+{{- end }}

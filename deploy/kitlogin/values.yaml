@@ -1,0 +1,419 @@
+# -- Cloud service being deployed on (example: `aws`, `azure`, `do`, `gcp`, `other`).
+cloud: aws
+
+# -- Notification email for notifications to be sent to from the Kitlogin stack
+notificationEmail: analytickit@gmail.com
+# -- Site url specifies the canonical URL root the site can be accessed using.
+# This is used to e.g. generate shareable links to Dashboards.
+siteUrl:  https://sca.analytickit.com           
+
+image:
+  # -- Kitlogin image repository to use.
+  repository: 1007234/kitlogin
+  #image user/pass
+  #imageCredentials:
+  #registry: github.com
+  #username: kitadmin01
+  #password:
+  #email: analytickit@gmail.com
+  # -- Kitlogin image SHA to use (example: `sha256:20af35fca6756d689d6705911a49dd6f2f6631e001ad43377b605cfc7c133eb4`).
+  sha:
+  # -- Kitlogin image tag to use (example: `release-1.35.0`).
+  tag: 
+  # -- Kitlogin default image. Do not overwrite, use `image.sha` or `image.tag` instead.
+  default: ":latest"
+  # -- Kitlogin image pull policy.
+  pullPolicy: Always
+
+# -- Sentry endpoint to send errors to.
+sentryDSN:
+
+# -- Django SECRET_KEY to use for hashing e.g. passwords. See
+# https://docs.djangoproject.com/en/4.0/ref/settings/#secret-key
+kitloginSecretKey:
+  # -- Specify that the key should be pulled from an existing secret key. By
+  # default the chart will generate a secret and create a Kubernetes Secret
+  # containing it.
+  existingSecret:
+  # -- Specify the key within the secret from which SECRET_KEY should be taken.
+  existingSecretKey: kitlogin-secret
+
+# -- Environment variables to inject into every Kitlogin deployment.
+env: []
+# env:
+#   - name: FOO
+#     value: bar
+
+
+
+email:
+  # -- SMTP service host.
+  host:
+  # -- SMTP service port.
+  port:
+  # -- SMTP service user.
+  user:
+  # -- SMTP service password.
+  password:
+  # -- Name of an existing Kubernetes secret object containing the SMTP service password.
+  existingSecret: ""
+  # -- Name of the key pointing to the password in your Kubernetes secret.
+  existingSecretKey: ""
+  # -- Use TLS to authenticate to the SMTP service.
+  use_tls: true
+  # -- Use SSL to authenticate to the SMTP service.
+  use_ssl:
+  # -- Outbound email sender to use.
+  from_email:
+
+
+saml:
+  # -- Whether password-based login is disabled and users automatically redirected to SAML login. Requires SAML to be properly configured.
+  enforced: false
+  # -- Whether SAML should be completely disabled. If set at build time, this will also prevent SAML dependencies from being installed.
+  disabled: false
+  # -- Entity ID from your SAML IdP.
+  # entity_id: "id-from-idp-5f9d4e-47ca-5080"
+  entity_id:
+  # -- Assertion Consumer Service URL from your SAML IdP.
+  # acs_url: "https://mysamlidp.com/saml2"
+  acs_url:
+  # -- Public X509 certificate from your SAML IdP to validate SAML assertions
+  x509_cert:
+  # -- Name of attribute that contains the permanent ID of the user in SAML assertions.
+  # attr_permanent_id: "nameID"
+  attr_permanent_id:
+  # -- Name of attribute that contains the first name of the user in SAML assertions.
+  # attr_first_name: "firstName"
+  attr_first_name:
+  # -- Name of attribute that contains the last name of the user in SAML assertions.
+  # attr_last_name: "lastName"
+  attr_last_name:
+  # -- Name of attribute that contains the email of the user in SAML assertions.
+  # attr_email: "email"
+  attr_email:
+
+
+service:
+  # -- Kitlogin service name.
+  name: kitlogin
+  # -- Kitlogin service type.
+  type: NodePort
+  externalPort: 8083
+  internalPort: 3000
+
+  # -- Kitlogin service annotations.
+  annotations: {}
+
+
+web:
+  # -- Whether to install the AnalyticKit web stack or not.
+  enabled: true
+
+  podAnnotations:
+    # Uncomment these lines if you want Prometheus server to scrape metrics.
+    # prometheus.io/scrape: "true"
+    # prometheus.io/path: /metrics
+    # prometheus.io/port: "8001"
+
+  # -- Count of web pods to run. This setting is ignored if `web.hpa.enabled` is set to `true`.
+  replicacount: 1
+
+  hpa:
+    # -- Whether to create a HorizontalPodAutoscaler for the web stack.
+    enabled: false
+    # -- CPU threshold percent for the web stack HorizontalPodAutoscaler.
+    cputhreshold: 60
+    # -- Min pods for the web stack HorizontalPodAutoscaler.
+    minpods: 1
+    # -- Max pods for the web stack HorizontalPodAutoscaler.
+    maxpods: 10
+    # -- Set the HPA behavior. See
+    # https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
+    # for configuration options
+    behavior:
+
+  # -- Resource limits for web service.
+  resources:
+    {}
+
+  # -- Additional env variables to inject into the web stack deployment.
+  env:
+    #- name: ALLOWED_IP_BLOCKS
+    #  value: "24.183.125.107"
+    #- name: IS_BEHIND_PROXY
+    #  value: "true"
+    #- name: TRUST_ALL_PROXIES
+    #  value: "true"
+    #- name: SECURE_COOKIES
+    #  value: "true"
+    # -- Set google oauth 2 key. Requires analytickit ee license.
+    - name: SOCIAL_AUTH_GOOGLE_OAUTH2_KEY
+      value:
+    # -- Set google oauth 2 secret. Requires analytickit ee license.
+    - name: SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET
+      value:
+    # -- Set google oauth 2 whitelisted domains users can log in from.
+    - name: SOCIAL_AUTH_GOOGLE_OAUTH2_WHITELISTED_DOMAINS
+      value: "analytickit.com"
+    # added to fix project_api_key error
+    - name: SELF_CAPTURE
+      value: "1"
+
+
+  internalMetrics:
+    # -- Whether to capture information on operation of analytickit into analytickit, exposed in /instance/status page
+    capture: true
+
+  # -- Node labels for web stack deployment.
+  nodeSelector: {}
+  # -- Toleration labels for web stack deployment.
+  tolerations: []
+  # -- Affinity settings for web stack deployment.
+  affinity: {}
+  # :TODO:
+  secureCookies: true
+
+  livenessProbe:
+    # -- The liveness probe failure threshold
+    failureThreshold: 3
+    # -- The liveness probe initial delay seconds
+    initialDelaySeconds: 0
+    # -- The liveness probe period seconds
+    periodSeconds: 5
+    # -- The liveness probe success threshold
+    successThreshold: 1
+    # -- The liveness probe timeout seconds
+    timeoutSeconds: 2
+
+  readinessProbe:
+    # -- The readiness probe failure threshold
+    failureThreshold: 3
+    # -- The readiness probe initial delay seconds
+    initialDelaySeconds: 0
+    # -- The readiness probe period seconds
+    periodSeconds: 30
+    # -- The readiness probe success threshold
+    successThreshold: 1
+    # -- The readiness probe timeout seconds
+    timeoutSeconds: 5
+
+  startupProbe:
+    # -- The startup probe failure threshold
+    failureThreshold: 6
+    # -- The startup probe initial delay seconds
+    initialDelaySeconds: 0
+    # -- The startup probe period seconds
+    periodSeconds: 10
+    # -- The startup probe success threshold
+    successThreshold: 1
+    # -- The startup probe timeout seconds
+    timeoutSeconds: 5
+
+  # -- Container security context for web stack deployment.
+  securityContext:
+    enabled: false
+  # -- Pod security context for web stack deployment.
+  podSecurityContext:
+    enabled: false
+
+
+###
+###
+### ---- CERT-MANAGER ----
+###
+###
+cert-manager:
+  # -- Whether to install `cert-manager` resources.
+  enabled: false
+  # -- Whether to install `cert-manager` CRDs.
+  installCRDs: true
+  # -- Who to email if the certificate is about to expire
+  # -- Defaults to `notificationEmail` if it is available
+  # -- Base default is noreply@<your-ingress-hostname>
+  email: analytickit@gmail.com
+
+  #
+  # [Workaround] - do not use the local DNS for the 'cert-manager' pods since it would return local IPs
+  # and break self checks.
+  #
+  # For more info see:
+  #   - https://github.com/jetstack/cert-manager/issues/1292
+  #   - https://github.com/jetstack/cert-manager/issues/3238
+  #   - https://github.com/jetstack/cert-manager/issues/4286
+  #   - https://github.com/compumike/hairpin-proxy
+  #
+  # This has some side effects, like 'cert-manager' pods not being able to resolve cluster-local names,
+  # but so far this has not caused issues (and we don't expect it to do so).
+  #
+  podDnsPolicy: None
+  podDnsConfig:
+    nameservers:
+      - 8.8.8.8
+      - 1.1.1.1
+      - 208.67.222.222
+
+
+###
+###
+### ---- INGRESS ----
+###
+###
+ingress:
+  # -- Enable ingress controller resource
+  enabled: true
+  # -- Ingress handler type. Defaults to `nginx` if nginx is enabled and to `clb` on gcp.
+  type:
+  # -- URL to address your Kitlogin installation. You will need to set up DNS after installation
+  hostname: sca.analytickit.com
+  gcp:
+    # -- Specifies the name of the global IP address resource to be associated with the google clb
+    ip_name: "kitlogin"
+    # -- If true, will force a https redirect when accessed over http
+    forceHttps: true
+    # -- Specifies the name of the tls secret to be used by the ingress. If not specified a managed certificate will be generated.
+    secretName: ""
+  # -- Whether to enable letsencrypt. Defaults to true if hostname is defined and nginx and cert-manager are enabled otherwise false.
+  letsencrypt:
+  nginx:
+    # -- Whether nginx is enabled
+    enabled: true
+    # -- Whether to redirect to TLS with nginx ingress.
+    redirectToTLS: true
+  # -- Extra annotations
+  annotations: {}
+  # -- TLS secret to be used by the ingress.
+  secretName:
+  # tolerations
+  tolerations:
+    - key: eks.amazonaws.com/compute-type
+      operator: Equal
+      value: fargate
+      effect: NoSchedule
+
+
+ingress-nginx:
+  controller:
+    config:
+      # -- Whether to forward "X-Forwarded-*" headers to upstream services.
+      # -- This is needed to ensure the  application knows e.g. if the
+      # -- downstream proxy is using a secure connection. See the official
+      # -- [ingress-nginx documentation](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#use-forwarded-headers)
+      use-forwarded-headers: "true"
+      # use-proxy-protocol: "true" this setting errors with handshake failure in cloudfalre
+      # proxy_pass: "http://127.0.0.1:8000"
+      # proxy_ssl_name: "sca.analytickit.com"
+      proxy_ssl_server_name: "on"
+      # proxy_redirect: "off"
+
+
+
+      # Use JSON format for logs, such that we can easily parse them in e.g. Promtail
+      #
+      # We also add in:
+      #
+      #  1. the X-Forwarded-For header so we can correlate if requests are from
+      #     the same ip.
+      #  2. a correlation_id that for the purposes of having functional defaults
+      #     is the NGINX generated $request_id. If you are using e.g. an AWS ALB
+      #     in front of ingress then consider instead changing this to
+      #     `$http_x_amzn_trace_id`.
+      #
+      log-format-escape-json: "true"
+      log-format-upstream: '{
+          "time": "$time_iso8601",
+          "remote_addr": "$proxy_protocol_addr",
+          "request_id": "$request_id",
+          "correlation_id": "$request_id",
+          "remote_user": "$remote_user",
+          "bytes_sent": $bytes_sent,
+          "request_time": $request_time,
+          "status": $status,
+          "host": "$host",
+          "request_proto": "$server_protocol",
+          "uri": "$uri",
+          "request_query": "$args",
+          "request_length": $request_length,
+          "duration": $request_time,
+          "method": "$request_method",
+          "http_referrer": "$http_referer",
+          "http_user_agent": "$http_user_agent",
+          "http_x_forwarded_for": "$http_x_forwarded_for"
+        }'
+
+    # Pass NGINX generated $request_id as X-Correlation-ID such that downstreams can use it
+    # for logging. See
+    # https://django-structlog.readthedocs.io/en/latest/events.html#request-bound-metadata
+    # for how django_structlog uses it.
+    #
+    # If using behind an AWS ALB you can set this to $http_x_amzn_trace_id such
+    # that you can correlate with ALB level requests as well.
+    # Changes proxySetHeaders need to delte the existing pod
+    proxySetHeaders:
+      X-Correlation-ID: $request_id
+      # X-Forwarded-For: $proxy_add_x_forwarded_for
+      # X-Forwarded-Proto: $scheme
+      # Host: $http_host
+
+
+
+cloudwatch:
+  # -- Enable cloudwatch container insights to get logs and metrics on AWS
+  enabled: false
+  # -- AWS region
+  region:
+  # -- AWS EKS cluster name
+  clusterName:
+  # -- fluentBit configuration
+  fluentBit:
+    server: "On"
+    port: 2020
+    readHead: "On"
+    readTail: "Off"
+
+
+# Provide affinity for hooks if needed
+hooks:
+  # -- Node labels for hooks.
+  nodeSelector: {}
+  # -- Toleration labels for hooks.
+  tolerations: []
+  # -- Affinity settings for hooks.
+  affinity: {}
+  migrate:
+    # -- Env variables for migate hooks
+    env: []
+    # -- Hook job resource limits/requests
+    resources: {}
+
+
+serviceAccount:
+  # -- Configures if a ServiceAccount with this name should be created
+  create: true
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  # -- name of the ServiceAccount to be used by access-controlled resources.
+  # @default autogenerated
+  name:
+  # -- Configures annotation for the ServiceAccount
+  annotations: {}
+
+
+
+## External Object Storage configuration
+##
+externalObjectStorage:
+  # -- Endpoint of the external object storage. e.g. https://s3.us-east-1.amazonaws.com
+  endpoint:
+  # -- Host of the external object storage. Deprecated: use endpoint instead
+  host:
+  # -- Port of the external object storage. Deprecated: use endpoint instead
+  port:
+  # -- Bucket name to use.
+  bucket:
+  # -- Name of an existing Kubernetes secret object containing the `access_key_id` and `secret_access_key`. The secret has to contain the keys `root-user` and `root-password`).
+  existingSecret:
+
+
+
+

@@ -1,0 +1,27 @@
+.MuiTableRow-root td:first-child {
+  border-top-left-radius: 20px;
+  border-bottom-left-radius: 20px;
+}
+
+.MuiTableRow-root td:last-child {
+  border-top-right-radius: 20px;
+  border-bottom-right-radius: 20px;
+}
+
+.MuiTableRow-root td:first-child:before {
+  content: "";
+  display: block;
+  width: 11px;
+  height: 98%;
+  left: 2px;
+  top: 0;
+  border-radius: 20px 0 0 20px;
+  position: absolute;
+}
+
+.MuiTableRow-root td {
+  position: relative;
+  /* border-bottom: 10px solid white; */
+  border-spacing: 0px 15px;
+  padding: 10px;
+}
